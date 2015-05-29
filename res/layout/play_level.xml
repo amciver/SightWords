@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+    <LinearLayout android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/lay_correct">
+        <ImageView android:id="@+id/text_total_correct_lbl"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_gravity="center_vertical"
+                   android:src="@drawable/smile"
+                   android:layout_marginRight="5dp"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/text_total_correct"
+                  android:textSize="20dp"
+                  android:text="0"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/lay_incorrect"
+                  android:layout_below="@id/lay_correct">
+        <ImageView android:id="@+id/text_total_incorrect_lbl"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_gravity="center_vertical"
+                   android:layout_marginRight="5dp"
+                   android:src="@drawable/sad"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/text_total_incorrect"
+                  android:textSize="20dp"
+                  android:text="0"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/lay_time"
+                  android:layout_alignParentRight="true">
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/text_time"
+                  android:textSize="20dp"
+                  android:text="0"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textSize="20dp"
+                  android:text=" second(s)"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_alignParentRight="true"
+                  android:layout_below="@id/lay_time">
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/text_total_skipped"
+                  android:textSize="20dp"
+                  android:text="3"/>
+        <TextView android:id="@+id/text_total_skipped_lbl"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textSize="20dp"
+                  android:text=" skip(s) remaining"/>
+    </LinearLayout>
+
+    <TextView android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:id="@+id/text_word_to_say"
+              android:layout_below="@+id/lay_incorrect"
+              android:paddingTop="10dp"
+              android:textSize="50dp"
+              android:text="SAMPLE"/>
+    <Button android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_skip_it"
+            android:layout_alignParentBottom="true"
+            android:text="SKIP IT"
+            android:onClick="onSkipIt"/>
+    <Button android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/btn_skip_it"
+            android:text="SAY IT"
+            android:onClick="onSayIt"/>
+</RelativeLayout>
