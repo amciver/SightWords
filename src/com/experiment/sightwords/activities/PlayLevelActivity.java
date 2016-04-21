@@ -13,9 +13,7 @@ import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import com.experiment.sightwords.InitActivity;
 import com.experiment.sightwords.R;
 import com.experiment.sightwords.database.SightWordsSQLiteHelper;
@@ -30,7 +28,11 @@ public class PlayLevelActivity extends Activity {
 
     private final String TAG = "PlayLevelActivity";
 
+    private int LEVEL_LENGTH = 90;
+
     private String ACTIVE_WORD = "";
+    private int ACTIVE_LEVEL = -1;
+
     private final int LEVEL_COUNT = 10;
     private int mLevelCount = LEVEL_COUNT;
 
@@ -48,9 +50,9 @@ public class PlayLevelActivity extends Activity {
         setContentView(R.layout.play_level);
 
         //obtain level to play
-        int level = this.getIntent().getExtras().getInt(Constants.LEVEL);
+        ACTIVE_LEVEL= this.getIntent().getExtras().getInt(Constants.LEVEL);
 
-        Log.d(TAG, "onCreate called w/level [" + level + "]");
+        Log.d(TAG, "onCreate called w/level [" + ACTIVE_LEVEL + "]");
 
         setUpSpeechRecognition();
         setUpDialog();
@@ -116,6 +118,7 @@ public class PlayLevelActivity extends Activity {
         if(!LISTENING) {
 
             LISTENING = true;
+            setListening(LISTENING);
 
             Intent recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -131,6 +134,7 @@ public class PlayLevelActivity extends Activity {
         }
 
         LISTENING = false;
+        setListening(LISTENING);
 
         modifySkips(false);
         setActiveWord();
@@ -139,6 +143,7 @@ public class PlayLevelActivity extends Activity {
     private void onSaidIt(String expected, String actual) {
 
         Log.d(TAG, "onSaidIt called, received [" + actual + "] and expected [" + expected + "]");
+        setListening(LISTENING);
 
         if ((expected.compareToIgnoreCase(actual) == 0) ||
                 actual.contains((CharSequence) expected)) {
@@ -164,25 +169,36 @@ public class PlayLevelActivity extends Activity {
 
             //if no more skips exist, disable button
             if(intSkipped == 0) {
-                Button btnSkip = (Button)findViewById(R.id.btn_skip_it);
+                ImageButton btnSkip = (ImageButton)findViewById(R.id.btn_skip_it);
+                btnSkip.setBackground(getDrawable(R.drawable.skipdisabled));
                 btnSkip.setEnabled(false);
             }
         }
     }
 
     private void modifyScore(boolean success) {
-        TextView textScore = null;
+        TextView textScore = (TextView)findViewById(R.id.text_total_correct);
+        int intScore = Integer.parseInt((String)textScore.getText());
         if(success) {
-            textScore = (TextView)findViewById(R.id.text_total_correct);
-            int intScore = Integer.parseInt((String)textScore.getText());
             intScore++;
-            textScore.setText(String.valueOf(intScore));
         }
         else {
-            textScore = (TextView)findViewById(R.id.text_total_incorrect);
-            int intScore = Integer.parseInt((String)textScore.getText());
             intScore--;
-            textScore.setText(String.valueOf(intScore));
+        }
+        textScore.setText(String.valueOf(intScore));
+    }
+
+    private void setListening(boolean listening) {
+        ImageView listeningView = (ImageView)findViewById(R.id.image_listening);
+        ProgressBar listeningProgressBar = (ProgressBar)findViewById(R.id.progressBar_listening);
+
+        if(listening) {
+            listeningView.setVisibility(View.VISIBLE);
+            listeningProgressBar.setVisibility(View.VISIBLE);
+        }
+        else {
+            listeningView.setVisibility(View.INVISIBLE);
+            listeningProgressBar.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -190,11 +206,9 @@ public class PlayLevelActivity extends Activity {
 
         SightWordsSQLiteHelper helper = new SightWordsSQLiteHelper(this.getApplicationContext());
 
-        //find another word and skip it if it's the one we just used
+        //find another word
         String word = "";
-        do {
-            word = helper.getWord("1");
-        } while (ACTIVE_WORD.compareToIgnoreCase(word) == 0);
+        word = helper.getWord(ACTIVE_LEVEL);
 
         Log.d(TAG, "setActiveWord setting new word to [" + word + "]");
         ACTIVE_WORD = word;
@@ -211,10 +225,10 @@ public class PlayLevelActivity extends Activity {
     private class TimerTask extends AsyncTask<Void, Integer, Integer> {
         protected Integer doInBackground(Void... params) {
 
-            int seconds = 0;
-            while(seconds < 30){
+            int seconds = LEVEL_LENGTH;
+            while(seconds > 0){
                  try { Thread.sleep(1000); } catch (InterruptedException e){ }
-                publishProgress(seconds++);
+                publishProgress(seconds--);
             }
 
             return seconds;

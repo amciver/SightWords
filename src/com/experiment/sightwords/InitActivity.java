@@ -12,7 +12,11 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.experiment.sightwords.database.SightWordsSQLiteHelper;
 import com.experiment.sightwords.util.Constants;
@@ -36,7 +40,7 @@ public class InitActivity extends Activity {
         Log.d(TAG, "onCreate called");
 
         setupPreferences(false);
-        setupDatabase(false);
+        setupDatabase(true);
 
         final ListView levels = (ListView) findViewById(R.id.list_levels);
         String[] values = new String[] { "Kindergarten", "1st grade", "2nd grade",
@@ -53,7 +57,7 @@ public class InitActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent playLevel = new Intent(getApplicationContext(), PlayLevelActivity.class);
-                playLevel.putExtra(Constants.LEVEL, 1);
+                playLevel.putExtra(Constants.LEVEL, position);
                 startActivity(playLevel);
             }
         });
@@ -63,35 +67,12 @@ public class InitActivity extends Activity {
     private void setupDatabase(boolean reset){
 
         SharedPreferences settings = getSharedPreferences(GLOBAL_PREFS, MODE_PRIVATE);
-        Log.d(TAG, "setupDatabase called with reset set as [" +reset+ "]");
-        Log.d(TAG, "setupDatabase called with "+PREFS_WORDS_SETUP+" set as [" +String.valueOf(settings.getBoolean(PREFS_WORDS_SETUP, false))+ "]");
+        Log.d(TAG, "setupDatabase called with reset set as [" + reset + "]");
+        Log.d(TAG, "setupDatabase called with " + PREFS_WORDS_SETUP + " set as [" + String.valueOf(settings.getBoolean(PREFS_WORDS_SETUP, false)) + "]");
 
         if(reset) {
             Log.d(TAG, "setupDatabase called with reset");
-
-            //setup the database with the words
-            SightWordsSQLiteHelper helper = new SightWordsSQLiteHelper(this.getApplicationContext());
-            helper.reset();
-            helper.addWord("1", "upset");
-            helper.addWord("1", "eggshell");
-            helper.addWord("1", "bathtub");
-            helper.addWord("1", "backpack");
-            helper.addWord("1", "sandbox");
-            helper.addWord("1", "hilltop");
-            helper.addWord("1", "sailboat");
-            helper.addWord("1", "candlestick");
-            helper.addWord("1", "hasn't");
-            helper.addWord("1", "cupcake");
-            helper.addWord("1", "couldn't");
-            helper.addWord("1", "mailbox");
-            helper.addWord("1", "teapot");
-            helper.addWord("1", "won't");
-            helper.addWord("1", "grasshopper");
-            helper.addWord("1", "can't");
-            helper.addWord("1", "backseat");
-            helper.addWord("1", "raincoat");
-            helper.addWord("1", "don't");
-            helper.addWord("1", "paintbrush");
+            setupWords(true);
 
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean(PREFS_WORDS_SETUP, true);
@@ -99,28 +80,7 @@ public class InitActivity extends Activity {
         }
         else if(!settings.getBoolean(PREFS_WORDS_SETUP, false)){
 
-            //setup the database with the words
-            SightWordsSQLiteHelper helper = new SightWordsSQLiteHelper(this.getApplicationContext());
-            helper.addWord("1", "upset");
-            helper.addWord("1", "eggshell");
-            helper.addWord("1", "bathtub");
-            helper.addWord("1", "backpack");
-            helper.addWord("1", "sandbox");
-            helper.addWord("1", "hilltop");
-            helper.addWord("1", "sailboat");
-            helper.addWord("1", "candlestick");
-            helper.addWord("1", "hasn't");
-            helper.addWord("1", "cupcake");
-            helper.addWord("1", "couldn't");
-            helper.addWord("1", "mailbox");
-            helper.addWord("1", "teapot");
-            helper.addWord("1", "won't");
-            helper.addWord("1", "grasshopper");
-            helper.addWord("1", "can't");
-            helper.addWord("1", "backseat");
-            helper.addWord("1", "raincoat");
-            helper.addWord("1", "don't");
-            helper.addWord("1", "paintbrush");
+            setupWords(false);
 
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean(PREFS_WORDS_SETUP, true);
@@ -140,11 +100,69 @@ public class InitActivity extends Activity {
             editor.apply();
         }
         else if(!settings.getBoolean(PREFS_SETUP, false)) {
-            Log.d(TAG, "setupPreferences called with " +  PREFS_SETUP + " set as " + String.valueOf(settings.getBoolean(PREFS_SETUP, false)));
+            Log.d(TAG, "setupPreferences called with " + PREFS_SETUP + " set as " + String.valueOf(settings.getBoolean(PREFS_SETUP, false)));
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean(PREFS_SETUP, true);
             editor.putBoolean(PREFS_WORDS_SETUP, false);
             editor.apply();
+        }
+    }
+
+    private void setupWords(boolean reset) {
+        //setup the database with the words
+        SightWordsSQLiteHelper helper = new SightWordsSQLiteHelper(this.getApplicationContext());
+        if(reset)
+            helper.reset();
+        setupKindergartenGrade(helper);
+        setup1stGrade(helper);
+        setup2ndGrade(helper);
+    }
+
+    private void setupKindergartenGrade(SightWordsSQLiteHelper helper){
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("kindergarten_grade.txt")));
+            List<String> words = new ArrayList<String>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                words.add(line.trim());
+            }
+
+            helper.addWords("0", words);
+        }
+        catch (IOException e) {
+            Log.e(TAG, "Error setting up Kindergarten grade words" + e);
+        }
+    }
+
+    private void setup1stGrade(SightWordsSQLiteHelper helper){
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("first_grade.txt")));
+            List<String> words = new ArrayList<String>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                words.add(line.trim());
+            }
+
+            helper.addWords("1", words);
+        }
+        catch (IOException e) {
+              Log.e(TAG, "Error setting up 1st grade words" + e);
+        }
+    }
+
+    private void setup2ndGrade(SightWordsSQLiteHelper helper){
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("second_grade.txt")));
+            List<String> words = new ArrayList<String>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                words.add(line.trim());
+            }
+
+            helper.addWords("2", words);
+        }
+        catch (IOException e) {
+            Log.e(TAG, "Error setting up 2nd grade words" + e);
         }
     }
 

@@ -8,6 +8,10 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 import com.experiment.sightwords.util.Randomizer;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
+
 /**
  * Created by amciver on 2/8/15.
  */
@@ -31,9 +35,9 @@ public class SightWordsSQLiteHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String CREATE_WORDS_TABLE = "CREATE TABLE IF NOT EXISTS words ( " +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "level TEXT, "+
+                "level INTEGER, "+
                 "word TEXT, "+
-                "last_used TEXT )";
+                "last_used INTEGER )";
         db.execSQL(CREATE_WORDS_TABLE);
     }
 
@@ -52,9 +56,9 @@ public class SightWordsSQLiteHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS words");
             String CREATE_WORDS_TABLE = "CREATE TABLE words ( " +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "level TEXT, "+
+                    "level INTEGER, "+
                     "word TEXT, "+
-                    "last_used TEXT )";
+                    "last_used INTEGER )";
             db.execSQL(CREATE_WORDS_TABLE);
         }
         catch (Exception e){
@@ -93,7 +97,39 @@ public class SightWordsSQLiteHelper extends SQLiteOpenHelper {
         }
     }
 
-    public String getWord(String level){
+    public boolean addWords(String level, List<String> words){
+        Log.d("SightWordsSQLiteHelper", "Adding words [" + words.toArray().toString() + "]");
+
+        SQLiteDatabase db = null;
+        try{
+            db = this.getWritableDatabase();
+            db.beginTransaction();
+
+            for(String word: words) {
+                ContentValues values = new ContentValues();
+                values.put(KEY_LEVEL, level);
+                values.put(KEY_WORD, word);
+                values.put(KEY_LAST_USED, -1);
+
+                db.insert(TABLE_WORDS, null, values); // key/value -> keys = column names/ values = column values
+            }
+
+            db.setTransactionSuccessful();
+            return true;
+        }
+        catch (Exception e){
+            Log.e("SightWordsSQLiteHelper", "Error adding word" + e);
+
+            return false;
+        }
+        finally{
+            db.endTransaction();
+            if(db != null)
+                try{db.close();}catch(Exception e){}
+        }
+    }
+
+    public String getWord(int level){
 
         Log.d("SightWordsSQLiteHelper", "getWord with level " + level + " called");
 
@@ -102,12 +138,12 @@ public class SightWordsSQLiteHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = null;
         Cursor c = null;
         try {
-            String whereClause = KEY_LEVEL + " = ?";
-            String[] whereArgs = new String[1];
-            whereArgs[0] = level;
+            String whereClauseGrade = KEY_LEVEL + " = ?";
+            String[] whereArgsGrade = new String[1];
+            whereArgsGrade[0] = String.valueOf(level);
 
-            db = this.getReadableDatabase();
-            c = db.query(TABLE_WORDS, null, whereClause, whereArgs, null, null, null);
+            db = this.getWritableDatabase();
+            c = db.query(TABLE_WORDS, null, whereClauseGrade, whereArgsGrade, null, null, KEY_LAST_USED + " ASC");
 
             if(c != null)  {
                 int count = c.getCount();
@@ -115,11 +151,27 @@ public class SightWordsSQLiteHelper extends SQLiteOpenHelper {
 
                 Log.d("SightWordsSQLiteHelper", "Random index being used is [" + index + "] out of a total possible count of [" + count + "]");
 
-                //move the curosr to the position of our indexing
+                //move the cursor to the position of our indexing
                 c.moveToPosition(index);
                 word = c.getString(c.getColumnIndex(KEY_WORD));
 
-                Log.d("SightWordsSQLiteHelper", "Word being set as " + word + " ");
+                //update last time used
+                Calendar currentTime = Calendar.getInstance();
+                ContentValues values = new ContentValues();
+
+                String whereClauseID = "id=?";
+                String[] whereArgsID = new String[] { String.valueOf(c.getInt(c.getColumnIndex(KEY_ID)))};
+
+                values.put(KEY_LEVEL, level);
+                values.put(KEY_WORD, word);
+                values.put(KEY_LAST_USED, currentTime.getTimeInMillis());
+
+                db.update(TABLE_WORDS, values, whereClauseID, whereArgsID);
+
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String formattedDate = df.format(currentTime.getTime());
+
+                Log.d("SightWordsSQLiteHelper", "Word being set as " + word + " and time last used as [" + formattedDate +"]");
             }
         }
         catch (Exception e){
